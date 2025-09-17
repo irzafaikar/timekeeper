@@ -22,23 +22,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-$(function () {
-	let nletters = 5, last_nletters = 5;
-	let time_str = "00:00";
-	let time_inner = 0;
+$(function() {
+	let nletters = 1, last_nletters = 1;
+	let time_str = "5";
+	let time_inner = 5 * 1000;
 	var loadedcss = '';
-	$('#time0').val('0:00');
-	$('#time1').val('15:00');
-	$('#time2').val('20:00');
-	$('#time3').val('25:00');
-	$('#info').html("Click to edit this message.");
+	$('#seconds').val('5');
+	$('#info').html("Clash of Statisticians");
 
 	function getHashParams() {
 		var hashParams = {};
 		var e,
 			a = /\+/g, // Regex for replacing addition symbol with a space
 			r = /([^&;=]+)=?([^&;]*)/g,
-			d = function (s) {
+			d = function(s) {
 				return decodeURIComponent(s.replace(a, " "));
 			},
 			q = window.location.hash.substring(1);
@@ -50,10 +47,7 @@ $(function () {
 
 	function parseHashParams() {
 		params = getHashParams();
-		if (params.t0 !== undefined) $('#time0').val(params.t0);
-		if (params.t1 !== undefined) $('#time1').val(params.t1);
-		if (params.t2 !== undefined) $('#time2').val(params.t2);
-		if (params.t3 !== undefined) $('#time3').val(params.t3);
+		if (params.s !== undefined) $('#seconds').val(params.s > 0 ? params.s : 5);
 		if (params.m !== undefined) $('#info').html(DOMPurify.sanitize(params.m));
 		if (loadedcss !== '') {
 			location.reload();
@@ -67,10 +61,11 @@ $(function () {
 	}
 
 	function updateHash() {
-		var hashstr = '#t0=' + $('#time0').val()
-			+ '&t1=' + $('#time1').val()
-			+ '&t2=' + $('#time2').val()
-			+ '&t3=' + $('#time3').val()
+		let seconds_val = parseInt($('#seconds').val(), 10);
+		if (isNaN(seconds_val) || seconds_val < 0) {
+			seconds_val = 5;
+		}
+		var hashstr = '#s=' + seconds_val
 			+ '&m=' + encodeURIComponent($('#info').html());
 		if (loadedcss !== 'default') {
 			hashstr = hashstr + '&th=' + encodeURIComponent(loadedcss);
@@ -82,7 +77,7 @@ $(function () {
 		}
 	};
 
-	$(window).on('hashchange', function () {
+	$(window).on('hashchange', function() {
 		parseHashParams();
 		updateHash();
 	});
@@ -90,32 +85,38 @@ $(function () {
 	parseHashParams();
 	updateHash();
 
-	$('#time0,#time1,#time2,#time3,#info').change(function () {
+	$('#seconds,#info').change(function() {
 		updateHash();
 	});
 
+	$('#seconds').blur(function() {
+		let seconds_val = parseInt($('#seconds').val(), 10);
+		if (isNaN(seconds_val) || seconds_val < 0) {
+			seconds_val = 5;
+		}
+		$('#seconds').val(seconds_val);
+	});
+
 	var infoline = $('#info').html();
-	$('#info').blur(function () {
+	$('#info').blur(function() {
 		if (infoline != $(this).html()) {
 			infoline = $(this).html();
 			updateHash();
 		}
 	});
 
-	var audio_chime1, audio_chime2, audio_chime3;
+	var audio_chime1;
 	audio_chime1 = new Audio("./wav/chime1.mp3");
-	audio_chime2 = new Audio("./wav/chime2.mp3");
-	audio_chime3 = new Audio("./wav/chime3.mp3");
 
 	function changeStateClass(s) {
-		$('body').removeClass(function (index, className) {
+		$('body').removeClass(function(index, className) {
 			return (className.match(/\bstate-\S+/g) || []).join(' ');
 		});
 		$('body').addClass('state-' + s);
 	};
 
 	function changePhaseClass(s) {
-		$('body').removeClass(function (index, className) {
+		$('body').removeClass(function(index, className) {
 			return (className.match(/\bphase-\S+/g) || []).join(' ');
 		});
 		$('body').addClass('phase-' + s);
@@ -127,7 +128,7 @@ $(function () {
 		$('#state').html('STANDBY');
 		changeStateClass('standby');
 		changePhaseClass('0');
-		time_inner = parse_time($('#time0').val());
+		time_inner = parse_seconds($('#seconds').val());
 		show_time();
 	}
 
@@ -139,31 +140,32 @@ $(function () {
 		$('.nav li#start').addClass('active');
 		$('#state').html('');
 		changeStateClass('start');
-		start_time = new Date((new Date()).getTime() - time_inner);
-		last_time = null;
+		start_time = new Date((new Date()).getTime() + time_inner);
+		last_time = 0;
 		audio_chime1.load();
-		audio_chime2.load();
-		audio_chime3.load();
 	}
 
-	$('.nav #standby').click(function (event) {
+	$('.nav #standby').click(function(event) {
 		event.preventDefault();
 		standby();
 	});
 
 	standby();
-	var start_time = new Date();
-	var last_time;
+	var start_time = new Date((new Date()).getTime() + time_inner);
+	var last_time = 0;
 
-	$('.nav #start').click(function (event) {
+	$('.nav #start').click(function(event) {
 		event.preventDefault();
 		start();
 	});
 
-	$('#time').dblclick(function (event) {
+	$('#time').dblclick(function(event) {
 		event.preventDefault();
-		let new_time = prompt('Force the time to', time_str);
+		let new_time = prompt('Force the time to', parse_time(time_str) / 1000);
 		if (new_time !== null) {
+			if (isNaN(new_time) || new_time < 0) {
+				new_time = 5;
+			}
 			set_time(new_time);
 		}
 	});
@@ -184,7 +186,7 @@ $(function () {
 		changeStateClass('paused');
 	}
 
-	$('.nav #pause').click(function (event) {
+	$('.nav #pause').click(function(event) {
 		event.preventDefault();
 		pause();
 	});
@@ -208,7 +210,7 @@ $(function () {
 	$(window).bind("resize", resize_display);
 	$(window).bind("orientationchange", resize_display);
 
-	$('#soundcheck').click(function (event) {
+	$('#soundcheck').click(function(event) {
 		event.preventDefault();
 		audio_chime1.load();
 		audio_chime1.currentTime = 0;
@@ -216,17 +218,22 @@ $(function () {
 	});
 
 	function format_time(t) {
-		if (t < 0) {
-			return '−' + format_time(-t + 999);
-		}
+		// if (t < 0) {
+		// 	return '−' + format_time(-t + 999);
+		// }
 		var h = Math.floor(t / 3600000);
 		var m = Math.floor((t - h * 3600000) / 60000);
 		var s = Math.floor((t - h * 3600000 - m * 60000) / 1000);
-		var ms = Math.floor((t - h * 3600000 - m * 60000 - s * 1000) / 10);
-		return ((h > 0) ? (h + ':') : '') + ('00' + m).slice(-2) + ':' + ('00' + s).slice(-2);
+		if (h > 0) {
+			return h + ':' + ('00' + m).slice(-2) + ':' + ('00' + s).slice(-2);
+		} else if (m > 0) {
+			return m + ':' + ('00' + s).slice(-2);
+		} else {
+			return s.toString();
+		}
 	}
 	function show_time() {
-		time_str = format_time(time_inner);
+		time_str = format_time(time_inner + 999);
 		nletters = time_str.length;
 		if (nletters != last_nletters) {
 			resize_display();
@@ -236,25 +243,23 @@ $(function () {
 	}
 
 	function set_time(t_str) {
-		start_time = new Date((new Date()).getTime() - parse_time(t_str));
+		start_time = new Date((new Date()).getTime() + parse_seconds(t_str));
 		update_time();
 	}
 
 	window.set_time = set_time;
 
-
-
 	function update_time() {
 		var cur_time = new Date();
-		var e = cur_time - start_time;
+		var e = start_time - cur_time;
 		time_inner = e;
 		show_time();
 	}
 
 	function parse_time(tstr) {
-		if (tstr.charAt(0) === '-' || tstr.charAt(0) === '−') {
-			return (-parse_time(tstr.slice(1)));
-		}
+		// if (tstr.charAt(0) === '-' || tstr.charAt(0) === '−') {
+		// 	return (-parse_time(tstr.slice(1)));
+		// }
 		const parts = tstr.split(/[:∶]/).reverse();
 		let time = 0;
 
@@ -268,41 +273,24 @@ $(function () {
 		return time;
 	}
 
+	function parse_seconds(tstr) {
+		const time = parseInt(tstr, 10) * 1000
+		return time;
+	}
+
 	$('[data-toggle="tooltip"]').tooltip();
-	$.timer(100, function (timer) {
+	$.timer(100, function(timer) {
 		resize_display();
 		if ($('.nav li#start').hasClass('active')) {
 			update_time();
 
-			var cur_time = new Date();
-			if (last_time != null) {
-				var time1 = new Date(start_time.getTime() + parse_time($('#time1').val()));
-				var time2 = new Date(start_time.getTime() + parse_time($('#time2').val()));
-				var time3 = new Date(start_time.getTime() + parse_time($('#time3').val()));
-
-				if ((last_time < time1 && time1 <= cur_time) || (last_time == time1 && cur_time == time1)) {
-					changePhaseClass('1');
-					audio_chime1.currentTime = 0;
-					audio_chime1.play();
-					console.log('chime1');
-				}
-
-				if ((last_time < time2 && time2 <= cur_time) || (last_time == time2 && cur_time == time2)) {
-					changePhaseClass('2');
-					audio_chime2.currentTime = 0;
-					audio_chime2.play();
-					console.log('chime2');
-				}
-
-				if ((last_time < time3 && time3 <= cur_time) || (last_time == time3 && cur_time == time3)) {
-					changePhaseClass('3');
-					audio_chime3.currentTime = 0;
-					audio_chime3.play();
-					console.log('chime3');
-				}
-
+			if (time_inner <= last_time) {
+				changePhaseClass('1');
+				audio_chime1.currentTime = 0;
+				audio_chime1.play();
+				console.log('chime1');
+				standby();
 			}
-			last_time = cur_time;
 		}
 	});
 
@@ -319,12 +307,30 @@ $(function () {
 	}
 
 	if (window.obsstudio) {
-		window.obsstudio.getCurrentScene(function (scene) {
+		window.obsstudio.getCurrentScene(function(scene) {
 			obs_scene_change(scene.name);
 		});
-		window.addEventListener('obsSceneChanged', function (event) {
+		window.addEventListener('obsSceneChanged', function(event) {
 			obs_scene_change(event.detail.name);
 		})
 	}
 	show_time();
 });
+
+// Keyboard shortcut
+$(document).keydown(function(event) {
+	if (event.key === " ") {
+		event.preventDefault();
+		if ($('.nav li#start').hasClass('active')) {
+			$('.nav #standby').trigger("click");
+		} else {
+			$('.nav #start').trigger("click");
+		}
+	}
+
+	if (event.key.toLowerCase() === "p") {
+		event.preventDefault();
+		$('.nav #pause').trigger("click");
+	}
+});
+
