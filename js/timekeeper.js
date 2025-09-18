@@ -182,6 +182,11 @@ $(function() {
 	});
 
 	function pause() {
+		if (isPlaying(audio_ticks)) {
+			audio_ticks.pause();
+			audio_ticks.currentTime = 0;
+		}
+
 		if ($('.nav li#standby').hasClass('active')) {
 			return;
 		}
