@@ -23,6 +23,8 @@ THE SOFTWARE.
 */
 
 /*Sound Effect by kave msri from Pixabay*/
+/*Sound Effect by freesound_community from Pixabay*/
+/*Sound Effect by Kalpesh Ajugia from Pixabay*/
 
 $(function() {
 	let nletters = 1, last_nletters = 1;
@@ -110,7 +112,9 @@ $(function() {
 	var audio_chime1;
 	var audio_ticks;
 	audio_chime1 = new Audio("./wav/chime1.mp3");
-	audio_ticks = new Audio("./wav/timer-ticks-314055.mp3");
+	audio_ticks = new Audio("./wav/time-ticker-slow-313807.mp3");
+	audio_ticks.loop = true;
+	// audio_ticks = new Audio("./wav/timer-ticks-314055.mp3");
 
 	function changeStateClass(s) {
 		$('body').removeClass(function(index, className) {
