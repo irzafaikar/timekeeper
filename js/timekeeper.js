@@ -22,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+/*Sound Effect by kave msri from Pixabay*/
+
 $(function() {
 	let nletters = 1, last_nletters = 1;
 	let time_str = "5";
@@ -106,7 +108,9 @@ $(function() {
 	});
 
 	var audio_chime1;
+	var audio_ticks;
 	audio_chime1 = new Audio("./wav/chime1.mp3");
+	audio_ticks = new Audio("./wav/timer-ticks-314055.mp3");
 
 	function changeStateClass(s) {
 		$('body').removeClass(function(index, className) {
@@ -123,6 +127,10 @@ $(function() {
 	};
 
 	function standby() {
+		if (isPlaying(audio_ticks)) {
+			audio_ticks.pause();
+			audio_ticks.currentTime = 0;
+		}
 		$('.nav li').removeClass('active');
 		$('.nav li#standby').addClass('active');
 		$('#state').html('STANDBY');
@@ -142,6 +150,9 @@ $(function() {
 		changeStateClass('start');
 		start_time = new Date((new Date()).getTime() + time_inner);
 		last_time = 0;
+		audio_ticks.load();
+		audio_ticks.currentTime = 0;
+		audio_ticks.play();
 		audio_chime1.load();
 	}
 
@@ -278,6 +289,10 @@ $(function() {
 		return time;
 	}
 
+	function isPlaying(audio) {
+		return !audio.paused && !audio.ended && audio.currentTime > 0;
+	}
+
 	$('[data-toggle="tooltip"]').tooltip();
 	$.timer(100, function(timer) {
 		resize_display();
@@ -286,9 +301,11 @@ $(function() {
 
 			if (time_inner <= last_time) {
 				changePhaseClass('1');
+				audio_ticks.pause();
+				audio_ticks.currentTime = 0;
 				audio_chime1.currentTime = 0;
 				audio_chime1.play();
-				console.log('chime1');
+				// console.log('chime1');
 				standby();
 			}
 		}
