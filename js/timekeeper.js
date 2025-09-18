@@ -112,9 +112,11 @@ $(function() {
 	var audio_chime1;
 	var audio_ticks;
 	audio_chime1 = new Audio("./wav/chime1.mp3");
-	audio_ticks = new Audio("./wav/time-ticker-slow-313807.mp3");
-	audio_ticks.loop = true;
 	// audio_ticks = new Audio("./wav/timer-ticks-314055.mp3");
+	// audio_ticks = new Audio("./wav/time-ticker-slow-313807.mp3");
+	// audio_ticks = new Audio("./wav/wall-clock-ticks-quartz-clock-25480.mp3");
+	audio_ticks = new Audio("./wav/watch-ticking-69213.mp3");
+	audio_ticks.loop = true;
 
 	function changeStateClass(s) {
 		$('body').removeClass(function(index, className) {
